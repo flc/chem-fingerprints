@@ -22,7 +22,7 @@ class Matcher(object):
     else:
         def HasMatch(self, mol):
             return self.ob_matcher.Match(mol, True)
-        
+
     def NumUniqueMatches(self, mol):
         self.ob_matcher.Match(mol)
         return sum(1 for x in self.ob_matcher.GetUMapList())
@@ -38,7 +38,7 @@ class HydrogenMatcher(object):
             if atom.ImplicitHydrogenCount():
                 return True
         return False
-        
+
     def NumUniqueMatches(self, mol):
         count = 0
         for i in range(1, mol.NumAtoms()+1):
@@ -57,14 +57,14 @@ class AromaticRings(object):
         # then there's an aromatic ring.
         self._single_matcher = OBSmartsPattern()
         assert self._single_matcher.Init("[aR]")
-        
+
     if _HAS_HASMATCH:
         def HasMatch(self, mol):
             return self._single_matcher.HasMatch(mol)
     else:
         def HasMatch(self, mol):
             return self._single_matcher.Match(mol, True)
-        
+
 
     def NumUniqueMatches(self, mol):
         num_rings = 0
@@ -92,7 +92,7 @@ class HeteroAromaticRings(object):
     else:
         def HasMatch(self, mol):
             return self._single_matcher.Match(mol, True)
-        
+
 
     def NumUniqueMatches(self, mol):
         num_rings = 0
@@ -119,12 +119,12 @@ class NumFragments(object):
         if n == 0:
             # No atoms means no fragments
             return 0
-        
+
         v = OBBitVec()
         mol.FindLargestFragment(v)
         if v.CountBits() == n:
             return 1
-        
+
         return 2
 
 _pattern_classes = {
@@ -137,7 +137,7 @@ _pattern_classes = {
 def ob_compile_pattern(pattern, max_count):
     if pattern in _pattern_classes:
         return _pattern_classes[pattern](max_count)
-    
+
     if pattern.startswith("<"):
         raise NotImplementedError(pattern)
 
@@ -151,7 +151,7 @@ class OBPatternFingerprinter(pattern_fingerprinter.PatternFingerprinter):
     def __init__(self, patterns):
         assert patterns is not None
         super(OBPatternFingerprinter, self).__init__(patterns, ob_compile_pattern)
-        
+
     def fingerprint(self, mol):
         bytes = [0] * self.num_bytes
         for matcher, largest_count, count_info_tuple in self.matcher_definitions:
@@ -184,16 +184,16 @@ _cached_fingerprinters = _CachedFingerprinters()
 # XX Shouldn't they be merged?
 
 _base = openbabel._base.clone(
-    software = SOFTWARE)
-    
+    software=SOFTWARE)
+
 
 SubstructOpenBabelFingerprinter_v1 = _base.clone(
-    name = "ChemFP-Substruct-OpenBabel/1",
-    num_bits = 881,
-    make_fingerprinter = lambda: _cached_fingerprinters["substruct"].fingerprint)
-    
+    name="ChemFP-Substruct-OpenBabel/1",
+    num_bits=881,
+    make_fingerprinter=lambda: _cached_fingerprinters["substruct"].fingerprint)
+
 
 RDMACCSOpenBabelFingerprinter_v1 = _base.clone(
-    name = "RDMACCS-OpenBabel/1",
-    num_bits = 166,
-    make_fingerprinter = lambda: _cached_fingerprinters["rdmaccs"].fingerprint)
+    name="RDMACCS-OpenBabel/1",
+    num_bits=166,
+    make_fingerprinter=lambda: _cached_fingerprinters["rdmaccs"].fingerprint)

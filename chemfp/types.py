@@ -34,13 +34,13 @@ class FamilyProxy(object):
 _family_config_paths = (
     ("OpenEye-MACCS166/1", "chemfp.openeye.OpenEyeMACCSFingerprintFamily_v1"),
     ("OpenEye-Path/1", "chemfp.openeye.OpenEyePathFingerprintFamily_v1"),
-    
+
     ("RDKit-MACCS166/1", "chemfp.rdkit.RDKitMACCSFingerprintFamily_v1"),
     ("RDKit-Fingerprint/1", "chemfp.rdkit.RDKitFingerprintFamily_v1"),
     ("RDKit-Morgan/1", "chemfp.rdkit.RDKitMorganFingerprintFamily_v1"),
     ("RDKit-Torsion/1", "chemfp.rdkit.RDKitTorsionFingerprintFamily_v1"),
     ("RDKit-Pair/1", "chemfp.rdkit.RDKitPairFingerprintFamily_v1"),
-    
+
     ("OpenBabel-FP2/1", "chemfp.openbabel.OpenBabelFP2FingerprintFamily_v1"),
     ("OpenBabel-FP3/1", "chemfp.openbabel.OpenBabelFP3FingerprintFamily_v1"),
     ("OpenBabel-FP4/1", "chemfp.openbabel.OpenBabelFP4FingerprintFamily_v1"),
@@ -90,7 +90,7 @@ def _initialize_families(config_paths):
     for name, path in config_paths:
         # Set both the versioned and non-versioned names
         # The paths must be in order from oldest to newest
-        
+
         unversioned_name = name.split("/")[0]
         d[unversioned_name] = d[name] = path
     return d
@@ -108,7 +108,7 @@ def get_fingerprint_family(name):
         return _loaded_families[name]
     except KeyError:
         pass
-    
+
     # Let's see if we can load it.
 
     # Is there a better name for this?
@@ -123,10 +123,10 @@ def get_fingerprint_family(name):
         path = _family_config_paths[new_name]
     except KeyError:
         raise ValueError("Unknown fingerprint family %r" % (name,))
-    
+
     config = import_decoder(path)
     config.validate()
-    
+
     family = FingerprintFamily(config)
     _loaded_families[name] = _loaded_families[new_name] = family
     return family
@@ -161,13 +161,13 @@ class FingerprintFamily(object):
                 decoder = required_args[left].decoder
             except KeyError:
                 raise ValueError("Unknown name %r in type %r" % (left, type))
-            
+
             try:
                 value = decoder(right)
             except ValueError, err:
                 raise ValueError("Unable to parse %s value %r in type %r" % (
                     left, right, type))
-            
+
             kwargs[left] = value
 
         # Fill in any missing default
@@ -192,8 +192,8 @@ class FingerprintFamily(object):
     def __ne__(self):
         3/0
 
-    
-    
+
+
 
 class Fingerprinter(object):
     def __init__(self, config, fingerprinter_kwargs):
@@ -204,7 +204,7 @@ class Fingerprinter(object):
             raise AssertionError(config.name)
         else:
             self.num_bits = config.num_bits(fingerprinter_kwargs)
-        
+
         self.fingerprinter_kwargs = fingerprinter_kwargs
 
     def __eq__(self, other):
@@ -237,14 +237,14 @@ class Fingerprinter(object):
             sources = []
         else:
             sources = [source_filename]
-            
+
         if metadata is None:
             # XXX I don't like how the user who wants to pass in aromaticity
             # information needs to create the full Metadata
             metadata = Metadata(num_bits=self.num_bits, type=self.get_type(),
                                 software=self.config.software,
                                 sources=sources)
-            
+
         structure_reader = self.config.read_structures(metadata, source, format, id_tag, errors)
         fingerprinter = self.config.make_fingerprinter(**self.fingerprinter_kwargs)
 
@@ -252,15 +252,15 @@ class Fingerprinter(object):
             for (id, mol) in structure_reader:
                 yield id, fingerprinter(mol)
         reader = fingerprint_reader(structure_reader, fingerprinter)
-        
-        return FingerprintIterator(Metadata(num_bits = self.num_bits,
-                                            sources = sources,
-                                            software = self.config.software,
-                                            type = self.get_type(),
-                                            date = io.utcnow(),
-                                            aromaticity = metadata.aromaticity),
+
+        return FingerprintIterator(Metadata(num_bits=self.num_bits,
+                                            sources=sources,
+                                            software=self.config.software,
+                                            type=self.get_type(),
+                                            date=io.utcnow(),
+                                            aromaticity=metadata.aromaticity),
                                    reader)
-    
+
     def describe(self, bitno):
         if not (0 <= bitno < self.num_bits):
             raise KeyError("Bit number %d is out of range" % (bitno,))
@@ -292,7 +292,7 @@ def _get_arg_names(s):
     args = GetArgs()
     s % args
     return args.args
-    
+
 class FingerprintArgument(object):
     def __init__(self, name, decoder, encoder, kwargs):
         self.name = name
@@ -307,23 +307,25 @@ def OR(first, second):
     if first is None:
         return second
     return first
-    
+
 class FingerprintFamilyConfig(object):
     def __init__(self,
-                 name = None,
-                 format_string = None,
-                 software = None,
-                 num_bits = None,
-                 read_structures = None,
-                 make_fingerprinter = None,
-                 verify_args = None,
-                 args = None,
+                 name=None,
+                 format_string=None,
+                 software=None,
+                 num_bits=None,
+                 read_structures=None,
+                 read_structure_from_string=None,
+                 make_fingerprinter=None,
+                 verify_args=None,
+                 args=None,
                  ):
         self.name = name
         self.format_string = format_string
         self.software = software
         self.num_bits = num_bits
         self.read_structures = read_structures
+        self.read_structure_from_string = read_structure_from_string
         self.make_fingerprinter = make_fingerprinter
         if args is None:
             args = {}
@@ -344,17 +346,19 @@ class FingerprintFamilyConfig(object):
         return args
 
     def clone(self, name=None, format_string=None, software=None,
-              num_bits=None, read_structures=None, make_fingerprinter=None,
+              num_bits=None, read_structures=None,
+              read_structure_from_string=None, make_fingerprinter=None,
               verify_args=None, args=None):
         return FingerprintFamilyConfig(
-            name = OR(name, self.name),
-            format_string = OR(format_string, self.format_string),
-            software = OR(software, self.software),
-            num_bits = OR(num_bits, self.num_bits),
-            read_structures = OR(read_structures, self.read_structures),
-            make_fingerprinter = OR(make_fingerprinter, self.make_fingerprinter),
-            verify_args = OR(verify_args, self.verify_args),
-            args = OR(args, self.args))
+            name=OR(name, self.name),
+            format_string=OR(format_string, self.format_string),
+            software=OR(software, self.software),
+            num_bits=OR(num_bits, self.num_bits),
+            read_structures=OR(read_structures, self.read_structures),
+            read_structure_from_string=OR(read_structure_from_string, self.read_structure_from_string),
+            make_fingerprinter=OR(make_fingerprinter, self.make_fingerprinter),
+            verify_args=OR(verify_args, self.verify_args),
+            args=OR(args, self.args))
 
     def add_argument(self, name, decoder=None, encoder=None, default=None,
                      action=None, metavar=None, help=None):
@@ -369,7 +373,7 @@ class FingerprintFamilyConfig(object):
             except ValueError, err:
                 raise argparse.ArgumentError(None, "%s %s" % (name, err))
         arg = FingerprintArgument(name, decoder, encoder,
-                                  kwargs = dict(type=parse_argument,
+                                  kwargs=dict(type=parse_argument,
                                                 default=default,
                                                 action=action,
                                                 metavar=metavar,
@@ -379,7 +383,7 @@ class FingerprintFamilyConfig(object):
     def add_argument_to_argparse(self, name, parser):
         info = self.args[name]
         parser.add_argument("--" + info.name, **info.kwargs)
-        
+
 
 # Helper functions
 
@@ -403,7 +407,7 @@ def zero_or_one(s):
     if s == "1":
         return 1
     raise ValueError("must be 0 or a 1")
-        
+
 
 def parse_type(type):
     terms = type.split()

@@ -54,7 +54,7 @@ def normalize_format(source, format, default=("fps", "")):
         filename = getattr(source, "name", None)
     else:
         raise ValueError("Unknown source type %r" % (source,))
-    
+
     if format is not None:
         # This must be of the form <name> [. <compression> ]
         m = _format_pat.match(format)
@@ -78,7 +78,7 @@ def normalize_format(source, format, default=("fps", "")):
         # specified format Not going to sniff the input. Instead, just
         return default
 
-    
+
 
     # The filename could have 0, 1 or 2 extensions
     base, ext = os.path.splitext(filename)
@@ -102,7 +102,7 @@ def normalize_format(source, format, default=("fps", "")):
 
     # The [1:] is to remove the leading "."
     format_name = ext[1:].lower()
-    
+
     return (format_name, compression)
 
 def get_filename(source):
@@ -126,7 +126,7 @@ def open_output(destination):
         return open(destination, "w")
     else:
         return open_compressed_output(destination, ext)
-    
+
 def open_compressed_output(destination, compression):
     if not compression:
         if destination is None:
@@ -233,7 +233,7 @@ def write_fps1_header(outfile, metadata):
 class _IgnorePipeErrors(object):
     def __enter__(self):
         return None
-    
+
     def __exit__(self, type, value, tb):
         if type is None:
             return False
@@ -254,7 +254,7 @@ def write_fps1_fingerprint(outfile, fp, id):
         raise ValueError("fingerprint ids must not contain a newline: %r" % (id,))
     if not id:
         raise ValueError("fingerprint ids must contain characters: %r" % (id,))
-    
+
     outfile.write("%s\t%s\n" % (binascii.hexlify(fp), id))
 
 
